@@ -1,0 +1,260 @@
+{
+  "version": 8,
+  "setup": {
+    "click_to_move": false,
+    "spawn_set": false
+  },
+  "server": {
+    "code": "",
+    "after_join_wait_ms": 20000
+  },
+  "keys": {
+    "interact": "e",
+    "equip": "6"
+  },
+  "camera": {
+    "enabled": true,
+    "out_steps": 40,
+    "in_steps": 0,
+    "step_delay_ms": 25,
+    "tilt_px": 600,
+    "settle_ms": 600
+  },
+  "lobby": {
+    "steps": [
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "button": "left",
+        "wait_ms": 2500,
+        "note": "Click to proceed (opens the menu)"
+      },
+      {
+        "kind": "click",
+        "point": null,
+        "button": "left",
+        "wait_ms": 2000,
+        "note": "Private server join"
+      },
+      {
+        "kind": "click",
+        "point": null,
+        "button": "left",
+        "wait_ms": 1000,
+        "note": "Private server code box"
+      },
+      {
+        "kind": "paste",
+        "text": "{code}",
+        "wait_ms": 2000,
+        "note": "Pastes your server code"
+      },
+      {
+        "kind": "click",
+        "point": null,
+        "button": "left",
+        "wait_ms": 2000,
+        "note": "Game type: Regular (confirms the pasted code)"
+      },
+      {
+        "kind": "click",
+        "point": null,
+        "button": "left",
+        "wait_ms": 2000,
+        "note": "Game type: Regular"
+      },
+      {
+        "kind": "click",
+        "point": null,
+        "button": "left",
+        "wait_ms": 2000,
+        "note": "First Sea server (joins)"
+      }
+    ]
+  },
+  "macro": {
+    "steps": [],
+    "house_wait_ms": 5000,
+    "interact_hold_ms": 100,
+    "start_delay_ms": 1000,
+    "on_finish": "rejoin"
+  },
+  "leave": {
+    "steps": [
+      {
+        "kind": "click",
+        "point": null,
+        "button": "left",
+        "wait_ms": 800,
+        "note": "Menu toggle (opens the accordion)"
+      },
+      {
+        "kind": "click",
+        "point": null,
+        "button": "left",
+        "wait_ms": 0,
+        "note": "Main menu"
+      },
+      {
+        "kind": "wait",
+        "wait_ms": 6000,
+        "note": "Wait for the title screen"
+      }
+    ]
+  },
+  "buy": {
+    "steps": [
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.50416666,
+          "y": 0.7770069
+        },
+        "button": "right",
+        "wait_ms": 1000,
+        "note": "Walk to the shop NPC (1/6)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.503125,
+          "y": 0.7770069
+        },
+        "button": "right",
+        "wait_ms": 1000,
+        "note": "Walk to the shop NPC (2/6)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.50416666,
+          "y": 0.7770069
+        },
+        "button": "right",
+        "wait_ms": 1000,
+        "note": "Walk to the shop NPC (3/6)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.5026042,
+          "y": 0.7799802
+        },
+        "button": "right",
+        "wait_ms": 1000,
+        "note": "Walk to the shop NPC (4/6)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.478125,
+          "y": 0.79682857
+        },
+        "button": "right",
+        "wait_ms": 1000,
+        "note": "Walk to the shop NPC (5/6)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.4984375,
+          "y": 0.7581764
+        },
+        "button": "right",
+        "wait_ms": 1000,
+        "note": "At the shop NPC (6/6)"
+      },
+      {
+        "kind": "scroll",
+        "amount": 4,
+        "wait_ms": 200,
+        "note": "Scroll the shop list (pick where the list is)"
+      },
+      {
+        "kind": "click",
+        "point": null,
+        "button": "left",
+        "wait_ms": 1000,
+        "note": "The item to buy"
+      },
+      {
+        "kind": "click",
+        "point": null,
+        "button": "left",
+        "wait_ms": 1500,
+        "note": "Accept"
+      }
+    ],
+    "every": 0
+  },
+  "run_order": [
+    {
+      "seq": "lobby"
+    },
+    {
+      "seq": "macro"
+    },
+    {
+      "seq": "leave"
+    }
+  ],
+  "timer": {
+    "enabled": true,
+    "region": {
+      "x": 0.86,
+      "y": 0.92,
+      "w": 0.13,
+      "h": 0.07
+    },
+    "mode": "elapsed",
+    "stop_at_s": 290,
+    "confirm_reads": 3,
+    "interval_ms": 1000,
+    "ocr_scale": 3,
+    "fallback": true,
+    "fallback_after_misses": 5,
+    "fallback_stop_s": 280
+  },
+  "recording": {
+    "target": "macro",
+    "mode": "replace",
+    "record_keys": true,
+    "camera_first": true,
+    "collapse_typing": true,
+    "round_ms": 50
+  },
+  "hotkeys": {
+    "toggle": "F1",
+    "overlay": "F2",
+    "quit": "F3",
+    "hide_hud": "F4",
+    "record": "F5",
+    "run_leave": "F6",
+    "run_lobby": "F7",
+    "run_macro": "F8"
+  },
+  "ui": {
+    "hud_offset": {
+      "x": 0.5,
+      "y": 0.0
+    },
+    "hud_visible": true,
+    "panel_offset": {
+      "x": 1.0,
+      "y": 0.5
+    },
+    "panel_size": [
+      460,
+      680
+    ]
+  },
+  "watchdog": {
+    "enabled": true,
+    "heartbeat_timeout_s": 30.0,
+    "max_restarts": 5,
+    "restart_backoff_s": 3.0
+  }
+}

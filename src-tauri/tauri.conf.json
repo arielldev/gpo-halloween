@@ -1,0 +1,102 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "GPO Halloween",
+  "version": "1.0.0",
+  "identifier": "dev.arielldev.gpo-halloween",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "hud",
+        "title": "GPO Halloween",
+        "url": "index.html?view=hud",
+        "width": 340,
+        "height": 56,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "skipTaskbar": true,
+        "shadow": false,
+        "visible": false,
+        "focus": false
+      },
+      {
+        "label": "panel",
+        "title": "GPO Halloween",
+        "url": "index.html?view=panel",
+        "width": 480,
+        "height": 720,
+        "minWidth": 420,
+        "minHeight": 520,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": true,
+        "skipTaskbar": false,
+        "shadow": false,
+        "visible": false,
+        "center": true
+      },
+      {
+        "label": "guide",
+        "title": "GPO Halloween · How to set up",
+        "url": "index.html?view=guide",
+        "width": 680,
+        "height": 560,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "skipTaskbar": false,
+        "shadow": false,
+        "visible": false,
+        "center": true
+      },
+      {
+        "label": "overlay",
+        "title": "GPO Halloween Overlay",
+        "url": "index.html?view=overlay",
+        "width": 800,
+        "height": 600,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "skipTaskbar": true,
+        "shadow": false,
+        "visible": false,
+        "focus": false
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": false,
+      "tooltip": "GPO Halloween"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  }
+}

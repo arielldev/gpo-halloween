@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0b0d12;
+  --color-bg-elev: #12151c;
+  --color-bg-glass: rgba(17, 14, 21, 0.97);
+  --color-line: rgba(255, 255, 255, 0.09);
+  --color-line-strong: rgba(255, 255, 255, 0.18);
+  --color-fg: #f2f3f7;
+  --color-fg-dim: #c0c5d1;
+  --color-fg-mute: #8e95a5;
+  --color-accent: #ff7a1a;
+  --color-accent-soft: rgba(255, 122, 26, 0.16);
+  --color-ok: #22c55e;
+  --color-ok-soft: rgba(34, 197, 94, 0.16);
+  --color-warn: #f59e0b;
+  --color-warn-soft: rgba(245, 158, 11, 0.16);
+  --color-bad: #ef4444;
+  --color-bad-soft: rgba(239, 68, 68, 0.16);
+  --color-fruit: #a78bfa;
+  --color-rec: #f43f5e;
+  --color-rec-soft: rgba(244, 63, 94, 0.16);
+  --font-sans: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "JetBrains Mono", ui-monospace, monospace;
+  --radius-xl: 14px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.glass {
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid var(--color-line-strong);
+}
+
+.drag {
+  -webkit-app-region: drag;
+  cursor: grab;
+}
+.drag:active {
+  cursor: grabbing;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="switch"]:not(:disabled),
+a[href],
+label[for],
+summary,
+input[type="range"],
+input[type="checkbox"],
+select {
+  cursor: pointer;
+}
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+input[type="text"],
+input[type="url"],
+input[type="number"],
+textarea,
+.select-text {
+  cursor: text;
+}
+.cursor-crosshair {
+  cursor: crosshair;
+}
+
+input[type="text"],
+input[type="url"],
+input[type="number"] {
+  outline: none;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 4px transparent;
+    opacity: 0.7;
+  }
+}
+.pulse {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise {
+  animation: rise 160ms ease-out;
+}
