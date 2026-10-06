@@ -18,6 +18,8 @@ tauri = { version = "2.11", features = ["tray-icon", "image-png"] }
 tauri-plugin-global-shortcut = "2.3"
 tauri-plugin-single-instance = "2.4"
 tauri-plugin-opener = "2.5"
+tauri-plugin-updater = "=2.11.0"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"

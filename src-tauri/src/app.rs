@@ -40,7 +40,8 @@ pub fn build_state() -> AppState {
     let platform = platform::build();
     let roblox = Arc::new(RwLock::new(platform.window.find()));
     let (tx, rx) = unbounded::<BotEvent>();
-    let bot = Bot::new(platform.clone(), Arc::clone(&settings), Arc::clone(&roblox), tx.clone(), Arc::clone(&store));
+    let webhook = crate::webhook::WebhookQueue::start(Arc::clone(&settings));
+    let bot = Bot::new(platform.clone(), Arc::clone(&settings), Arc::clone(&roblox), tx.clone(), Arc::clone(&store), webhook);
 
     AppState {
         platform,
@@ -73,7 +74,17 @@ pub fn setup(app: &AppHandle, st: &AppState) -> Result<(), Box<dyn std::error::E
 
 fn init_logging(dir: &std::path::Path) {
     use tracing_subscriber::{fmt, prelude::*, EnvFilter};
-    let file = tracing_appender::rolling::daily(dir.join("logs"), "gpo-halloween.log");
+    let logs = dir.join("logs");
+    let _ = std::fs::create_dir_all(&logs);
+    if let Ok(entries) = std::fs::read_dir(&logs) {
+        for e in entries.flatten() {
+            let p = e.path();
+            if p.is_file() {
+                let _ = std::fs::remove_file(p);
+            }
+        }
+    }
+    let file = tracing_appender::rolling::never(&logs, "gpo-halloween.log");
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     let _ = tracing_subscriber::registry()
         .with(filter)

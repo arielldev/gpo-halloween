@@ -220,6 +220,10 @@ fn click_points(s: &Settings, seq: SeqId) -> Vec<Option<RelPoint>> {
 
 pub fn open_overlay(app: &AppHandle, target: OverlayTarget) -> Result<OverlaySession, String> {
     let st = app.state::<AppState>();
+    if st.settings.read().setup.auto_maximize && st.platform.window.normalize() == crate::core::types::WindowFix::Maximized {
+        std::thread::sleep(std::time::Duration::from_millis(600));
+        *st.roblox.write() = st.platform.window.find();
+    }
     let roblox = st.roblox.read().map(|w| w.client).ok_or("Roblox window not found")?;
     let s = st.settings.read().clone();
     let session = match target {
@@ -413,6 +417,17 @@ pub fn open_url(app: AppHandle, url: String) -> Result<(), String> {
 pub fn open_path(app: AppHandle, path: String) -> Result<(), String> {
     use tauri_plugin_opener::OpenerExt;
     app.opener().open_path(path, None::<&str>).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn webhook_test(st: State<'_, AppState>) -> Result<(), String> {
+    let wh = Arc::clone(&st.bot.ctx().webhook);
+    blocking(move || wh.test()).await
+}
+
+#[tauri::command]
+pub fn hotkey_conflicts() -> Vec<String> {
+    hotkeys::conflicts()
 }
 
 #[tauri::command]

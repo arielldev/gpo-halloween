@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { BookOpen, ChevronDown, Play, Square } from "lucide-react";
 import { api } from "../lib/ipc";
 import { useStore, isActive } from "../lib/store";
-import { SEQ_LABEL, STATE_LABEL, fmtClock } from "../lib/types";
-import { Button, Pill, Section, cx, fmtRuntime } from "../components/primitives";
+import { SEQ_LABEL, STATE_LABEL, activeOrder, fmtClock } from "../lib/types";
+import { Button, Pill, Section, TextField, cx, fmtRuntime } from "../components/primitives";
 import { StateBadge } from "../components/StateIcon";
 import { LogList } from "../components/LogList";
 import { GetStarted, setupStatus } from "../components/GetStarted";
 import { RunOrderSummary } from "../components/RunOrder";
+import { DiscordCard } from "../components/Discord";
 
 export default function Dashboard() {
   const state = useStore((s) => s.state);
@@ -30,7 +31,6 @@ export default function Dashboard() {
   }, [stats.runtime_s, farming]);
 
   if (!settings) return null;
-  const hk = settings.hotkeys.toggle;
   const sub = (n: number) => (farming ? `this run ${n}` : undefined);
   const step = progress && active && progress.total > 0 ? `${SEQ_LABEL[progress.seq]} step ${Math.min(progress.index + 1, progress.total)} of ${progress.total}` : null;
 
@@ -54,14 +54,21 @@ export default function Dashboard() {
           </Button>
         )}
       </div>
-      <div className="px-4 pb-4 text-[12px] text-fg-dim leading-relaxed">
-        Press <span className="font-mono text-fg">{hk}</span> anywhere to start or stop. It runs your sequences in this order, then repeats:
+      <div className="px-4 pb-3">
+        <ServerCodeCard />
+      </div>
+      <div className="px-4 pb-3">
+        <StartHint />
       </div>
       <div className="px-4 pb-4">
         <RunOrderSummary />
       </div>
 
       <GetStartedSection />
+
+      <div className="px-4 pb-6">
+        <DiscordCard />
+      </div>
 
       <Section title="Server timer">
         <TimerCard />
@@ -81,6 +88,53 @@ export default function Dashboard() {
       <Section title="Activity">
         <LogList height={220} />
       </Section>
+    </div>
+  );
+}
+
+function ServerCodeCard() {
+  const settings = useStore((s) => s.settings);
+  const update = useStore((s) => s.update);
+  if (!settings) return null;
+  const code = settings.server.code.trim();
+  return (
+    <div className={cx("rounded-xl border px-3 py-2.5", code ? "border-line bg-black/20" : "border-bad/50 bg-bad-soft")}>
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-[12.5px] font-semibold">Private server code</span>
+        <Pill tone={code ? "ok" : "bad"}>{code ? "set" : "required"}</Pill>
+      </div>
+      <TextField
+        value={settings.server.code}
+        onChange={(v) => update((x) => void (x.server.code = v.trim()))}
+        placeholder="paste your private server code here"
+        mono
+      />
+      <div className="mt-1.5 text-[11px] text-fg-mute leading-snug">Every rejoin pastes this code into GPO's private server box.</div>
+    </div>
+  );
+}
+
+function StartHint() {
+  const settings = useStore((s) => s.settings);
+  if (!settings) return null;
+  const first = activeOrder(settings)[0];
+  const where =
+    first === "lobby" ? (
+      <>
+        Open GPO and stay on the <b className="text-fg">main menu (lobby)</b>, then press
+      </>
+    ) : first === "leave" ? (
+      <>
+        Join your private server, then press
+      </>
+    ) : (
+      <>
+        Stand at your spawn in your private server, then press
+      </>
+    );
+  return (
+    <div className="rounded-xl border border-accent/30 bg-accent-soft px-3 py-2.5 text-[12px] text-fg-dim leading-relaxed">
+      {where} <span className="font-mono text-fg">{settings.hotkeys.toggle}</span> (or Start). Press it again any time to stop. It runs these in order, then repeats:
     </div>
   );
 }

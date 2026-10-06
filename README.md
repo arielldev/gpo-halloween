@@ -30,6 +30,8 @@ An **open-source** macro for the Grand Piece Online Halloween event. It walks fr
 - **📌 HUD pill + tray icon** - A small always-on-top pill on the Roblox window with the timer, houses and rejoins
 - **🖱️ On-screen editor** - Lay out the timer area and pick click points directly over the game
 - **🛟 Watchdog** - Leaves to the lobby and restarts if a step hangs
+- **🔔 Discord webhook** - Stats, recent activity and the community link posted every N routes, plus start/stop and problem alerts
+- **⬆️ Auto update** - Checks GitHub Releases on launch; one click installs the new version
 - **💾 Presets + JSON export** - Save setups, and export or import the full settings JSON
 - **📤 Share sequences** - Export any single sequence (Lobby, Macro, Leave to lobby) to a file and import it on another PC
 - **⌨️ Global hotkey support** (F1 to F8, all rebindable)
@@ -84,12 +86,22 @@ For development: `npm install` then `npm run app:dev`. Tests: `cd src-tauri && c
 
 Everything below is in **Home › Get started**, with the real inputs right there.
 
+### Ready out of the box
+
+The release ships with a complete, tested setup: Lobby rejoin, house route, Leave to lobby, Buy loop (every 5 routes), timer box, camera and candy bag. You only need to:
+
+1. **Paste your private server code** in Home › Get started
+2. **Tick Click to Move and Spawn set** once you've done them in game
+3. **Check your candy bag slot** (default `1`) matches your hotbar
+
+Everything is relative to a maximized Roblox window, and the macro keeps Roblox maximized for you.
+
 ### Before you start
 
 - **Click to Move**: Roblox menu (`Esc`) › Settings › Movement Mode › **Click to Move**. Shift Lock off
 - **Spawn**: Talk to the spawn NPC on the island with the Halloween houses and set your spawn there
 - **Private server**: Required. Copy your private server code
-- **Window size**: Keep Roblox the same size for recording and playback
+- **Window size**: The macro keeps Roblox maximized in a window (not fullscreen) automatically, so recorded clicks and the timer area always line up
 
 ### First Time Setup
 
@@ -100,6 +112,12 @@ Everything below is in **Home › Get started**, with the real inputs right ther
 5. **Macro**: Stand at spawn on a fresh load, press **Record**. The camera zooms out first. Click to walk to each house and press `E` at every door. Press `F5` to finish. Test with `F8`
 6. **Timer area**: Press `F2` and lay out the box over the bottom-right timer. The box shows the live read while you drag. Press **Read now** to confirm
 7. **Farm**: Stand at spawn and press **F1** or the HUD play button
+
+### Discord Webhook Setup
+
+1. **Create a webhook**: Discord › channel settings › Integrations › Webhooks › New webhook › Copy URL
+2. **Paste it** in Settings › Discord and press **Test**
+3. **Pick how often**: progress every N routes (stats, recent activity and the community link), plus start/stop and problem alerts
 
 ### Hotkeys
 
@@ -124,6 +142,7 @@ Every point and area is **relative to the Roblox window** (0 to 1).
 | Path | Meaning |
 |------|---------|
 | `setup.click_to_move`, `setup.spawn_set` | Setup checklist ticks |
+| `setup.auto_maximize` | Keep Roblox maximized in a window: restores/maximizes it (and leaves fullscreen with F11) on start and whenever it comes back to the front (default on) |
 | `server.code` | **Required.** Private server code, pasted wherever a step says `{code}` |
 | `server.after_join_wait_ms` | Wait after joining for the server to load |
 | `keys.interact` | Key held at each house (`e`) |
@@ -146,6 +165,8 @@ Every point and area is **relative to the Roblox window** (0 to 1).
 | `recording.*` | Target, replace/append, record keys, camera first, collapse typing, rounding |
 | `hotkeys.*` | Global hotkeys |
 | `watchdog.*` | Restarts from Leave to lobby if a step hangs |
+| `webhook.enabled`, `url`, `every_routes`, `start_stop`, `errors` | Discord webhook: progress every N routes, start/stop and problem alerts |
+| `auto_update` | Check GitHub Releases for a newer version on launch (default on) |
 
 Each step has a `kind`, a `wait_ms` (delay after it) and an optional `note`:
 
@@ -166,11 +187,11 @@ A click with `"point": null` still needs picking, and the macro won't start unti
 ## 🔧 Troubleshooting
 
 - **HUD not showing**: It only appears while Roblox is running and not minimized. Press F4 if you hid it
-- **Hotkeys not working**: Another app may own the key (for example GPO Autofish uses F1 to F4 too). Close it or rebind in Settings › Hotkeys
+- **Hotkeys not working**: Another app may own the key (for example GPO Autofish uses F1 to F4 too). The macro then listens for the key directly and marks it **taken** in Settings › Hotkeys. If it still doesn't react, close the other app or rebind
 - **Character walks to the wrong place**: Re-record the Macro from a fresh load at spawn, with the same window size and Click to Move on
 - **Timer not read**: Press F2 and make the box tighter around the timer. Home › Server timer › OCR sees shows exactly what the OCR reads
 - **Rejoin fails**: Run Lobby with F7 from the main menu and check each click. Make sure the server code is set
-- **Logs**: Settings › Data folder › `logs/`
+- **Logs**: Settings › Data folder › `logs/gpo-halloween.log` (one file, started fresh each launch)
 
 ---
 

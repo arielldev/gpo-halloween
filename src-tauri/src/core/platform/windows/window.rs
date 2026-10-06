@@ -1,18 +1,19 @@
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::{HWND, POINT, RECT};
-use windows::Win32::Graphics::Gdi::ClientToScreen;
+use windows::Win32::Graphics::Gdi::{ClientToScreen, GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST};
 use windows::Win32::System::Threading::GetCurrentProcessId;
 use windows::Win32::UI::HiDpi::GetDpiForWindow;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP, VK_MENU,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    FindWindowW, GetAncestor, GetClientRect, GetForegroundWindow, GetWindowThreadProcessId, IsIconic, IsWindow,
-    IsWindowVisible, SetForegroundWindow, ShowWindow, WindowFromPoint, GA_ROOT, SW_RESTORE,
+    FindWindowW, GetAncestor, GetClientRect, GetForegroundWindow, GetWindowLongPtrW, GetWindowRect, GetWindowThreadProcessId,
+    IsIconic, IsWindow, IsWindowVisible, IsZoomed, SetForegroundWindow, ShowWindow, WindowFromPoint, GA_ROOT, GWL_STYLE,
+    SW_MAXIMIZE, SW_RESTORE, WS_CAPTION,
 };
 
 use crate::core::platform::GameWindow;
-use crate::core::types::{PxPoint, PxRect, WindowInfo};
+use crate::core::types::{PxPoint, PxRect, WindowFix, WindowInfo};
 
 pub struct Win32Window {
     class: Vec<u16>,
@@ -82,6 +83,29 @@ impl GameWindow for Win32Window {
     fn game_foreground(&self) -> bool {
         let Some(h) = self.hwnd() else { return false };
         unsafe { GetForegroundWindow() == h }
+    }
+
+    fn normalize(&self) -> WindowFix {
+        let Some(h) = self.hwnd() else { return WindowFix::None };
+        unsafe {
+            if IsIconic(h).as_bool() {
+                let _ = ShowWindow(h, SW_RESTORE);
+            }
+            let style = GetWindowLongPtrW(h, GWL_STYLE) as u32;
+            let mut wr = RECT::default();
+            let _ = GetWindowRect(h, &mut wr);
+            let mut mi = MONITORINFO { cbSize: std::mem::size_of::<MONITORINFO>() as u32, ..Default::default() };
+            let has_monitor = GetMonitorInfoW(MonitorFromWindow(h, MONITOR_DEFAULTTONEAREST), &mut mi).as_bool();
+            let covers_monitor = has_monitor && wr == mi.rcMonitor;
+            if style & WS_CAPTION.0 == 0 && covers_monitor {
+                return WindowFix::Fullscreen;
+            }
+            if !IsZoomed(h).as_bool() {
+                let _ = ShowWindow(h, SW_MAXIMIZE);
+                return WindowFix::Maximized;
+            }
+            WindowFix::None
+        }
     }
 
     fn owns_point(&self, p: PxPoint) -> bool {

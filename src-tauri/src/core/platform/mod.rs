@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::core::types::{Frame, Key, MouseButton, PxPoint, PxRect, WindowInfo};
+use crate::core::types::{Frame, Key, MouseButton, PxPoint, PxRect, WindowFix, WindowInfo};
 
 pub mod mock;
 #[cfg(windows)]
@@ -25,6 +25,7 @@ pub trait GameWindow: Send + Sync {
     fn focus(&self) -> bool;
     fn game_foreground(&self) -> bool;
     fn owns_point(&self, p: PxPoint) -> bool;
+    fn normalize(&self) -> WindowFix;
 }
 
 pub trait Capture: Send + Sync {
@@ -54,6 +55,7 @@ pub trait Ocr: Send + Sync {
 pub struct Platform {
     pub window: Arc<dyn GameWindow>,
     pub capture: Arc<dyn Capture>,
+    pub capture_live: Arc<dyn Capture>,
     pub input: Arc<dyn Input>,
     pub ocr: Arc<dyn Ocr>,
 }
@@ -63,6 +65,7 @@ pub fn build() -> Platform {
     Platform {
         window: Arc::new(windows::window::Win32Window::new("Roblox")),
         capture: Arc::new(windows::capture_dxgi::DxgiCapture::new()),
+        capture_live: Arc::new(windows::capture::GdiCapture::new()),
         input: Arc::new(windows::input::SendInputBackend::new()),
         ocr: build_ocr(),
     }

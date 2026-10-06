@@ -59,6 +59,8 @@ export const api = {
   openUrl: (url: string) => invoke<void>("open_url", { url }),
   openPath: (path: string) => invoke<void>("open_path", { path }),
   dataDir: () => invoke<string>("data_dir"),
+  hotkeyConflicts: () => invoke<string[]>("hotkey_conflicts"),
+  webhookTest: () => invoke<void>("webhook_test"),
 };
 
 type Events = {

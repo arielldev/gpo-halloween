@@ -22,8 +22,39 @@ pub fn read_timer(platform: &Platform, client: PxRect, timer: &Timer) -> Result<
     if !platform.ocr.available() {
         return Err("Windows OCR is not available on this system".into());
     }
-    let frame = platform.capture.grab(timer.region.to_px(&client)).map_err(|e| e.to_string())?;
+    let rect = timer.region.to_px(&client);
     let scale = timer.ocr_scale.clamp(2, 6) as usize;
+    let primary = platform.capture.grab(rect).map_err(|e| e.to_string());
+    let first = match &primary {
+        Ok(frame) => Some(read_frame(platform, frame.clone(), scale)?),
+        Err(_) => None,
+    };
+    if let Some(r) = &first {
+        if r.seconds.is_some() {
+            return Ok(first.unwrap());
+        }
+    }
+    let live = platform.capture_live.grab(rect).map_err(|e| e.to_string());
+    match live {
+        Ok(frame) => {
+            let mut r = read_frame(platform, frame, scale)?;
+            if r.seconds.is_some() {
+                r.method = match r.method {
+                    "groups" => "groups (live)",
+                    "no-colon" => "no-colon (live)",
+                    "raw" => "raw (live)",
+                    "contrast" => "contrast (live)",
+                    m => m,
+                };
+                return Ok(r);
+            }
+            Ok(first.filter(|f| !f.text.trim().is_empty()).unwrap_or(r))
+        }
+        Err(e) => first.ok_or(e),
+    }
+}
+
+fn read_frame(platform: &Platform, frame: Frame, scale: usize) -> Result<OcrRead, String> {
     if let Some(r) = read_groups(platform, &frame, scale) {
         return Ok(OcrRead { seconds: parse_clock_digits(&r.replace(':', "")), text: r, frame, method: "groups" });
     }
@@ -76,6 +107,7 @@ pub fn run(ctx: &Ctx) {
     let mut misses = 0u32;
     let mut warned = false;
     let mut last_good: Option<(u32, Instant)> = None;
+    let mut reading_ok: Option<bool> = None;
     while ctx.running() {
         let t = ctx.settings.read().timer.clone();
         let next = Instant::now() + Duration::from_millis(t.interval_ms.clamp(250, 10_000) as u64);
@@ -85,7 +117,7 @@ pub fn run(ctx: &Ctx) {
         if !ctx.running() {
             return;
         }
-        if !t.enabled {
+        if !t.enabled || !ctx.platform.window.game_foreground() {
             continue;
         }
         let armed = ctx.timer_armed();
@@ -109,6 +141,20 @@ pub fn run(ctx: &Ctx) {
         let fresh = |lg: &Option<(u32, Instant)>| lg.filter(|g| g.1.elapsed() < Duration::from_secs(10));
         let mut raw = String::new();
         let mut estimated = false;
+        match &ocr {
+            Ok(OcrRead { seconds: Some(s), method, .. }) if reading_ok != Some(true) => {
+                let again = if reading_ok == Some(false) { " again" } else { "" };
+                ctx.log_info(&format!("Timer: reading the timer{again} ({} via {method})", fmt_clock(*s)));
+                reading_ok = Some(true);
+            }
+            Ok(OcrRead { seconds: None, text, .. }) if misses + 1 == 3 && reading_ok != Some(false) => {
+                let saw = text.trim().replace('\n', " · ");
+                let saw = if saw.is_empty() { "nothing".to_string() } else { format!("\"{saw}\"") };
+                ctx.log_warn(&format!("Timer: can't read the timer right now (OCR saw {saw}). Press F2 to check the box."));
+                reading_ok = Some(false);
+            }
+            _ => {}
+        }
         let (seconds, source, confirmed) = match ocr {
             Ok(OcrRead { seconds: Some(s), text, .. }) => {
                 misses = 0;

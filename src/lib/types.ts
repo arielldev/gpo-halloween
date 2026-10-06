@@ -61,7 +61,7 @@ export type StepKind = Action["kind"];
 
 export type Settings = {
   version: number;
-  setup: { click_to_move: boolean; spawn_set: boolean };
+  setup: { click_to_move: boolean; spawn_set: boolean; auto_maximize: boolean };
   server: { code: string; after_join_wait_ms: number };
   keys: { interact: string; equip: string };
   camera: { enabled: boolean; out_steps: number; in_steps: number; step_delay_ms: number; tilt_px: number; settle_ms: number };
@@ -101,6 +101,8 @@ export type Settings = {
   };
   ui: { hud_offset: RelPoint; hud_visible: boolean; panel_offset: RelPoint; panel_size: [number, number] };
   watchdog: { enabled: boolean; heartbeat_timeout_s: number; max_restarts: number; restart_backoff_s: number };
+  webhook: { enabled: boolean; url: string; every_routes: number; start_stop: boolean; errors: boolean };
+  auto_update: boolean;
 };
 
 export type Snapshot = {

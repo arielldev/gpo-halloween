@@ -6,6 +6,7 @@ pub mod core;
 pub mod events;
 pub mod hotkeys;
 pub mod tray;
+pub mod webhook;
 pub mod windows;
 
 use tauri::Manager;
@@ -19,6 +20,7 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let handle = app.handle().clone();
             let st = app.state::<app::AppState>();
@@ -76,6 +78,8 @@ pub fn run() {
             commands::open_url,
             commands::open_path,
             commands::data_dir,
+            commands::hotkey_conflicts,
+            commands::webhook_test,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

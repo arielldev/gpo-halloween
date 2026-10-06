@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { House, Keyboard, Minus, Settings2, X } from "lucide-react";
+import { check, type Update } from "@tauri-apps/plugin-updater";
+import { Download, House, Keyboard, Minus, Settings2, X } from "lucide-react";
 import { api, on } from "../lib/ipc";
 import { useStore, type Tab } from "../lib/store";
 import { cx, Dot } from "../components/primitives";
@@ -25,6 +26,9 @@ export default function Panel() {
   const tab = useStore((s) => s.tab);
   const goto = useStore((s) => s.goto);
   const [skipGate, setSkipGate] = useState(false);
+  const autoUpdate = useStore((s) => s.settings?.auto_update ?? true);
+  const [update, setUpdate] = useState<Update | null>(null);
+  const [updating, setUpdating] = useState<string | null>(null);
   const [appear, setAppear] = useState(0);
   const visibleRef = useRef(true);
 
@@ -45,6 +49,28 @@ export default function Panel() {
   useEffect(() => {
     if (roblox) setSkipGate(false);
   }, [roblox]);
+
+  useEffect(() => {
+    if (!ready || !autoUpdate) return;
+    check()
+      .then((u) => {
+        if (!u) return;
+        setUpdate(u);
+        useStore.setState({ lastEvent: { kind: "update", text: `Update ${u.version} available`, ts: Date.now() } });
+      })
+      .catch(() => undefined);
+  }, [ready, autoUpdate]);
+
+  const installUpdate = async () => {
+    if (!update) return;
+    setUpdating("Downloading…");
+    try {
+      await update.downloadAndInstall();
+      setUpdating("Installing, the app will restart.");
+    } catch (e) {
+      setUpdating(String(e));
+    }
+  };
 
   useEffect(() => {
     let t: number | undefined;
@@ -88,6 +114,17 @@ export default function Panel() {
           <header className="h-11 flex items-center px-4 border-b border-line drag shrink-0">
             <div className="font-semibold">{gated ? "GPO Halloween" : TABS.find((t) => t.id === tab)?.label}</div>
             <div className="ml-auto flex items-center gap-1 no-drag">
+              {update && (
+                <button
+                  className="h-7 px-2.5 mr-1 rounded-lg inline-flex items-center gap-1.5 text-[11px] font-medium bg-accent-soft text-accent hover:bg-accent/30 disabled:opacity-60"
+                  onClick={installUpdate}
+                  disabled={!!updating}
+                  title={update.body ?? `Version ${update.version} is out. Click to install.`}
+                >
+                  <Download size={12} />
+                  {updating ?? `Update ${update.version}`}
+                </button>
+              )}
               <button className="w-8 h-8 rounded-lg grid place-items-center text-fg-mute hover:bg-white/[0.06] hover:text-fg" onClick={() => getCurrentWindow().minimize()}>
                 <Minus size={15} />
               </button>

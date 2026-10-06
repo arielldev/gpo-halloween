@@ -47,7 +47,7 @@ impl WindowsOcr {
                     OcrEngine::TryCreateFromLanguage(&lang).ok()
                 });
                 if engine.is_none() {
-                    tracing::warn!("Windows OCR engine unavailable; fruit detection disabled");
+                    tracing::warn!("Windows OCR engine unavailable; the server timer cannot be read (backup clock only)");
                 }
                 engine
             })

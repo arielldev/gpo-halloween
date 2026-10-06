@@ -8,7 +8,60 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 use crate::app::AppState;
 use crate::config::{Hotkeys, SeqId};
+use crate::core::types::Key;
 use crate::windows;
+
+#[derive(Clone, Copy)]
+struct Fallback {
+    key: Key,
+    ctrl: bool,
+    shift: bool,
+    alt: bool,
+    action: Action,
+}
+
+static FALLBACKS: Mutex<Vec<(String, Fallback)>> = Mutex::new(Vec::new());
+static POLLER: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+fn parse_combo(combo: &str) -> Option<(Key, bool, bool, bool)> {
+    let parts: Vec<&str> = combo.split('+').map(|p| p.trim()).filter(|p| !p.is_empty()).collect();
+    let (last, mods) = parts.split_last()?;
+    let has = |m: &str| mods.iter().any(|x| x.eq_ignore_ascii_case(m));
+    Some((Key::parse(last)?, has("ctrl") || has("control"), has("shift"), has("alt")))
+}
+
+pub fn conflicts() -> Vec<String> {
+    FALLBACKS.lock().iter().map(|(c, _)| c.clone()).collect()
+}
+
+fn start_poller(app: &AppHandle) {
+    if POLLER.swap(true, std::sync::atomic::Ordering::SeqCst) {
+        return;
+    }
+    let app = app.clone();
+    std::thread::Builder::new()
+        .name("hotkey-fallback".into())
+        .spawn(move || {
+            let input = app.state::<AppState>().platform.input.clone();
+            let mut was_down: Vec<bool> = Vec::new();
+            loop {
+                std::thread::sleep(Duration::from_millis(30));
+                let list: Vec<Fallback> = FALLBACKS.lock().iter().map(|(_, f)| *f).collect();
+                was_down.resize(list.len(), false);
+                for (i, f) in list.iter().enumerate() {
+                    let down = input.key_down(f.key)
+                        && input.key_down(Key::Control) == f.ctrl
+                        && input.key_down(Key::Shift) == f.shift
+                        && input.key_down(Key::Alt) == f.alt;
+                    if down && !was_down[i] {
+                        dispatch(&app, f.action);
+                    }
+                    was_down[i] = down;
+                }
+            }
+        })
+        .expect("spawn hotkey fallback");
+}
 
 const REPEAT_GUARD: Duration = Duration::from_millis(700);
 
@@ -46,6 +99,7 @@ pub fn register(app: &AppHandle, keys: &Hotkeys) -> Result<(), String> {
         (keys.run_macro.as_str(), Action::Run(SeqId::Macro)),
     ];
     let mut errors = Vec::new();
+    let mut fallbacks: Vec<(String, Fallback)> = Vec::new();
     for (combo, action) in bindings {
         if combo.trim().is_empty() {
             continue;
@@ -62,8 +116,25 @@ pub fn register(app: &AppHandle, keys: &Hotkeys) -> Result<(), String> {
                 dispatch(app, action);
             }
         }) {
-            errors.push(format!("Could not bind {combo}: {e}"));
+            match parse_combo(combo) {
+                Some((key, ctrl, shift, alt)) => {
+                    fallbacks.push((combo.to_string(), Fallback { key, ctrl, shift, alt, action }));
+                }
+                None => errors.push(format!("Could not bind {combo}: {e}")),
+            }
         }
+    }
+    let taken: Vec<String> = fallbacks.iter().map(|(c, _)| c.clone()).collect();
+    *FALLBACKS.lock() = fallbacks;
+    if !taken.is_empty() {
+        start_poller(app);
+        let st = app.state::<AppState>();
+        st.bot.ctx().log_warn(&format!(
+            "{} {} used by another app, so the macro listens for {} directly. If it doesn't react, pick another key in Settings › Hotkeys.",
+            taken.join(", "),
+            if taken.len() == 1 { "is" } else { "are" },
+            if taken.len() == 1 { "it" } else { "them" }
+        ));
     }
     if errors.is_empty() {
         Ok(())

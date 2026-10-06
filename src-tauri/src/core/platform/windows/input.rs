@@ -3,7 +3,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
     KEYBDINPUT, KEYBD_EVENT_FLAGS, KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE,
     KEYEVENTF_UNICODE, MAPVK_VK_TO_VSC, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP,
     MOUSEEVENTF_MOVE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_VIRTUALDESK, MOUSEEVENTF_WHEEL, MOUSEINPUT, VIRTUAL_KEY,
-    VK_BACK, VK_CONTROL, VK_DELETE, VK_ESCAPE, VK_LBUTTON, VK_RBUTTON, VK_RETURN, VK_SHIFT, VK_SPACE, VK_TAB,
+    VK_BACK, VK_CONTROL, VK_DELETE, VK_ESCAPE, VK_F1, VK_LBUTTON, VK_MENU, VK_RBUTTON, VK_RETURN, VK_SHIFT, VK_SPACE, VK_TAB,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     GetCursorPos, GetSystemMetrics, SetCursorPos, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN,
@@ -92,6 +92,8 @@ fn key_to_vk(k: Key) -> Option<VIRTUAL_KEY> {
         Key::Space => Some(VK_SPACE),
         Key::Shift => Some(VK_SHIFT),
         Key::Control => Some(VK_CONTROL),
+        Key::Alt => Some(VK_MENU),
+        Key::F(n) => Some(VIRTUAL_KEY(VK_F1.0 + n.clamp(1, 24) as u16 - 1)),
         Key::Char(c) => {
             let scan = unsafe { VkKeyScanW(c as u16) };
             if scan == -1 || (scan >> 8) & 0x07 != 0 {

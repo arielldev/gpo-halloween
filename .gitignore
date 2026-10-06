@@ -7,3 +7,5 @@ src-tauri/gen/schemas/
 .idea/
 .DS_Store
 Thumbs.db
+*.key
+*.key.pub

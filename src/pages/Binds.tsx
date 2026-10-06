@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { api } from "../lib/ipc";
 import { DoorOpen, Footprints, LogIn } from "lucide-react";
 import { useStore } from "../lib/store";
 import type { SeqId, Settings } from "../lib/types";
@@ -6,7 +7,7 @@ import { SEQ_HOTKEY, SEQ_LABEL, problems, seqHotkey } from "../lib/types";
 import { RunOrderEditor, SEQ_ICON } from "../components/RunOrder";
 import { StepList, MsField, KeyField } from "../components/StepList";
 import { SeqControls, SeqFileButtons, SeqStatus } from "../components/SeqControls";
-import { Kbd, KeyCapture, Row, Section, Segmented, Stepper, Toggle, cx } from "../components/primitives";
+import { Kbd, KeyCapture, Pill, Row, Section, Segmented, Stepper, Toggle, cx } from "../components/primitives";
 
 const ORDER: SeqId[] = ["lobby", "macro", "leave", "buy"];
 
@@ -193,6 +194,12 @@ function MacroFields({ s }: { s: Settings }) {
 export function HotkeyList() {
   const s = useStore((st) => st.settings);
   const update = useStore((st) => st.update);
+  const [taken, setTaken] = useState<string[]>([]);
+  const keysSig = s ? Object.values(s.hotkeys).join("|") : "";
+  useEffect(() => {
+    const t = setTimeout(() => api.hotkeyConflicts().then(setTaken).catch(() => undefined), 300);
+    return () => clearTimeout(t);
+  }, [keysSig]);
   if (!s) return null;
   const rows: [keyof Settings["hotkeys"], string][] = [
     ["toggle", "Start / stop macro"],
@@ -207,7 +214,17 @@ export function HotkeyList() {
   return (
     <>
       {rows.map(([k, label]) => (
-        <Row key={k} title={label} right={<KeyCapture value={s.hotkeys[k]} onChange={(v) => update((x) => void (x.hotkeys[k] = v))} />} />
+        <Row
+          key={k}
+          title={label}
+          sub={taken.includes(s.hotkeys[k]) ? `${s.hotkeys[k]} is also used by another app. The macro listens for it directly; pick another key if it doesn't react.` : undefined}
+          right={
+            <>
+              {taken.includes(s.hotkeys[k]) && <Pill tone="warn">taken</Pill>}
+              <KeyCapture value={s.hotkeys[k]} onChange={(v) => update((x) => void (x.hotkeys[k] = v))} />
+            </>
+          }
+        />
       ))}
     </>
   );

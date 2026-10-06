@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::types::{MouseButton, RelPoint, RelRect};
 
-pub const SETTINGS_VERSION: u32 = 8;
+pub const SETTINGS_VERSION: u32 = 9;
 pub const CODE_PLACEHOLDER: &str = "{code}";
 const BUNDLED_DEFAULTS: &str = include_str!("../defaults.json");
 
@@ -151,11 +151,18 @@ impl Default for Keys {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Setup {
     pub click_to_move: bool,
     pub spawn_set: bool,
+    pub auto_maximize: bool,
+}
+
+impl Default for Setup {
+    fn default() -> Self {
+        Self { click_to_move: false, spawn_set: false, auto_maximize: true }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -376,6 +383,22 @@ impl Default for Watchdog {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
+pub struct Webhook {
+    pub enabled: bool,
+    pub url: String,
+    pub every_routes: u32,
+    pub start_stop: bool,
+    pub errors: bool,
+}
+
+impl Default for Webhook {
+    fn default() -> Self {
+        Self { enabled: false, url: String::new(), every_routes: 5, start_stop: true, errors: true }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
     pub version: u32,
     pub setup: Setup,
@@ -393,6 +416,8 @@ pub struct Settings {
     pub hotkeys: Hotkeys,
     pub ui: Ui,
     pub watchdog: Watchdog,
+    pub webhook: Webhook,
+    pub auto_update: bool,
 }
 
 impl Default for Settings {
@@ -413,6 +438,8 @@ impl Default for Settings {
             hotkeys: Hotkeys::default(),
             ui: Ui::default(),
             watchdog: Watchdog::default(),
+            webhook: Webhook::default(),
+            auto_update: true,
         }
     }
 }
@@ -445,7 +472,7 @@ pub fn buy_template() -> Vec<Step> {
         walk(0.502_604_2, 0.779_980_2, "Walk to the shop NPC (4/6)"),
         walk(0.478_125, 0.796_828_57, "Walk to the shop NPC (5/6)"),
         walk(0.498_437_5, 0.758_176_4, "At the shop NPC (6/6)"),
-        Step::new(Action::Scroll { amount: 4, point: None }, 200, "Scroll the shop list (pick where the list is)"),
+        Step::new(Action::Scroll { amount: -4, point: None }, 300, "Scroll the shop list down (pick where the list is)"),
         click(None, 1000, "The item to buy"),
         click(None, 1500, "Accept"),
     ]
@@ -672,6 +699,15 @@ impl Store {
             if settings.version < 8 && untouched_template(&settings.buy.steps) {
                 settings.buy.steps = buy_template();
             }
+            if settings.version < 9 {
+                for st in settings.buy.steps.iter_mut() {
+                    if let Action::Scroll { amount, .. } = &mut st.action {
+                        if *amount > 0 {
+                            *amount = -*amount;
+                        }
+                    }
+                }
+            }
             settings.version = SETTINGS_VERSION;
             let _ = self.save(&settings);
         }
@@ -769,18 +805,30 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "regenerates defaults.json from Settings::default()"]
-    fn write_defaults_json() {
-        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("defaults.json");
-        let mut json = serde_json::to_string_pretty(&Settings::default()).unwrap();
-        json.push('\n');
-        fs::write(path, json).unwrap();
-    }
-
-    #[test]
     fn bundled_defaults_parse() {
         let parsed: Settings = serde_json::from_str(BUNDLED_DEFAULTS).expect("defaults.json must be valid");
         assert_eq!(parsed.version, SETTINGS_VERSION);
+        assert!(parsed.server.code.is_empty(), "defaults.json must not ship a private server code");
+        let looks_like_code = |t: &str| {
+            let t = t.trim();
+            (8..=14).contains(&t.len())
+                && t.chars().all(|c| c.is_ascii_alphanumeric())
+                && t.chars().any(|c| c.is_ascii_digit())
+                && t.chars().any(|c| c.is_ascii_uppercase())
+                && t.chars().any(|c| c.is_ascii_lowercase())
+        };
+        for seq in [SeqId::Lobby, SeqId::Macro, SeqId::Leave, SeqId::Buy] {
+            for st in parsed.steps(seq) {
+                let text = match &st.action {
+                    Action::Type { text } | Action::Paste { text } => text.as_str(),
+                    _ => "",
+                };
+                assert!(!looks_like_code(&st.note) && !looks_like_code(text), "{seq:?} step looks like it holds a server code");
+            }
+        }
+        for seq in [SeqId::Lobby, SeqId::Macro, SeqId::Leave] {
+            assert!(parsed.problems(seq).iter().all(|p| p.contains("server code")), "{seq:?}: {:?}", parsed.problems(seq));
+        }
     }
 
     #[test]
@@ -925,6 +973,19 @@ mod tests {
         let j = serde_json::to_string(&Step::new(Action::Scroll { amount: 2, point: None }, 0, "")).unwrap();
         assert!(!j.contains("point"));
         assert!(!buy_template().iter().any(|s| matches!(s.action, Action::Key { .. })));
+    }
+
+    #[test]
+    fn migration_v9_scrolls_buy_lists_down() {
+        let dir = std::env::temp_dir().join(format!("gpo-halloween-mig9-{}", std::process::id()));
+        let store = Store::new(dir.clone());
+        let mut old = Settings::default();
+        old.version = 8;
+        old.buy.steps = vec![Step::new(Action::Scroll { amount: 4, point: Some(RelPoint { x: 0.5, y: 0.5 }) }, 200, "")];
+        store.save(&old).unwrap();
+        let s = store.load();
+        assert_eq!(s.buy.steps[0].action, Action::Scroll { amount: -4, point: Some(RelPoint { x: 0.5, y: 0.5 }) });
+        let _ = fs::remove_dir_all(dir);
     }
 
     #[test]

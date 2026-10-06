@@ -4,7 +4,7 @@ use std::sync::Arc;
 use parking_lot::Mutex;
 
 use super::{Capture, GameWindow, Input, Ocr, Platform, PlatformError, Result};
-use crate::core::types::{Frame, Key, MouseButton, PxPoint, PxRect, WindowInfo};
+use crate::core::types::{Frame, Key, MouseButton, PxPoint, PxRect, WindowFix, WindowInfo};
 
 #[derive(Default)]
 pub struct MockWindow {
@@ -23,6 +23,9 @@ impl GameWindow for MockWindow {
     }
     fn owns_point(&self, p: PxPoint) -> bool {
         self.info.lock().map(|w| w.client.contains(p)).unwrap_or(false)
+    }
+    fn normalize(&self) -> WindowFix {
+        WindowFix::None
     }
 }
 
@@ -127,6 +130,7 @@ pub fn platform() -> Platform {
     Platform {
         window: Arc::new(MockWindow::default()),
         capture: Arc::new(ScriptedCapture::default()),
+        capture_live: Arc::new(ScriptedCapture::default()),
         input: Arc::new(RecordingInput::default()),
         ocr: Arc::new(NoOcr),
     }

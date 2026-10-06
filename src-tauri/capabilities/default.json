@@ -18,6 +18,7 @@
     "core:window:allow-inner-size",
     "core:event:default",
     "global-shortcut:default",
-    "opener:default"
+    "opener:default",
+    "updater:default"
   ]
 }

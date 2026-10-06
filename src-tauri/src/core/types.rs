@@ -153,6 +153,15 @@ pub enum Key {
     Space,
     Shift,
     Control,
+    Alt,
+    F(u8),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WindowFix {
+    None,
+    Maximized,
+    Fullscreen,
 }
 
 impl Key {
@@ -170,6 +179,8 @@ impl Key {
             "space" => Key::Space,
             "shift" => Key::Shift,
             "ctrl" | "control" => Key::Control,
+            "alt" => Key::Alt,
+            f if f.len() >= 2 && f.starts_with('f') && f[1..].parse::<u8>().is_ok_and(|n| (1..=24).contains(&n)) => Key::F(f[1..].parse().unwrap_or(1)),
             _ => return None,
         })
     }
@@ -185,6 +196,8 @@ impl Key {
             Key::Space => "Space".into(),
             Key::Shift => "Shift".into(),
             Key::Control => "Ctrl".into(),
+            Key::Alt => "Alt".into(),
+            Key::F(n) => format!("F{n}"),
         }
     }
 
@@ -207,6 +220,9 @@ mod tests {
         assert_eq!(Key::parse("E"), Some(Key::Char('e')));
         assert_eq!(Key::parse("esc"), Some(Key::Escape));
         assert_eq!(Key::parse("nope"), None);
+        assert_eq!(Key::parse("F11"), Some(Key::F(11)));
+        assert_eq!(Key::F(11).name(), "F11");
+        assert_eq!(Key::parse("f99"), None);
     }
 
     #[test]

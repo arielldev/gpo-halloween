@@ -1,11 +1,12 @@
 use crate::config::{Action, SeqId, Step, CODE_PLACEHOLDER};
-use crate::core::types::{Key, MouseButton, PxPoint, RelPoint};
+use crate::core::types::{Key, MouseButton, PxPoint, RelPoint, WindowFix};
 use crate::events::{BotEvent, BotState};
 
 use super::ctx::Ctx;
 
 const WHEEL_STEP: i32 = 120;
 const TILT_CHUNK_PX: i32 = 20;
+const SCROLL_MIN_DELAY_MS: u32 = 60;
 
 pub fn click(ctx: &Ctx, p: PxPoint, button: MouseButton) -> bool {
     let input = &ctx.platform.input;
@@ -123,9 +124,39 @@ pub fn prepare_route(ctx: &Ctx) -> bool {
     key_hold(ctx, k, 60) && ctx.sleep_ms(500)
 }
 
+static LAST_F11: parking_lot::Mutex<Option<std::time::Instant>> = parking_lot::Mutex::new(None);
+
+pub fn normalize_window(ctx: &Ctx) -> bool {
+    if !ctx.settings.read().setup.auto_maximize {
+        return true;
+    }
+    match ctx.platform.window.normalize() {
+        WindowFix::None => true,
+        WindowFix::Maximized => {
+            ctx.log_info("Maximized the Roblox window so clicks and the timer area line up");
+            ctx.sleep_ms(700)
+        }
+        WindowFix::Fullscreen => {
+            let recent = LAST_F11.lock().map(|t| t.elapsed() < std::time::Duration::from_secs(10)).unwrap_or(false);
+            if recent {
+                return true;
+            }
+            *LAST_F11.lock() = Some(std::time::Instant::now());
+            ctx.log_info("Roblox is fullscreen; pressing F11 to switch to a maximized window");
+            if !key_hold(ctx, Key::F(11), 60) || !ctx.sleep_ms(900) {
+                return false;
+            }
+            if ctx.platform.window.normalize() == WindowFix::Maximized {
+                ctx.log_info("Maximized the Roblox window so clicks and the timer area line up");
+            }
+            ctx.sleep_ms(700)
+        }
+    }
+}
+
 pub fn ensure_front(ctx: &Ctx) -> bool {
     if ctx.ensure_roblox_focus() {
-        return true;
+        return normalize_window(ctx);
     }
     let prev = ctx.state();
     ctx.set_state(BotState::WaitingForRoblox, Some("Roblox is not in front".into()));
@@ -134,7 +165,7 @@ pub fn ensure_front(ctx: &Ctx) -> bool {
         if ctx.ensure_roblox_focus() {
             ctx.log_info("Roblox is back in front");
             ctx.set_state(prev, None);
-            return true;
+            return normalize_window(ctx);
         }
         if !ctx.sleep_ms(500) {
             return false;
@@ -226,12 +257,22 @@ fn run_step(ctx: &Ctx, seq: SeqId, i: usize, step: &Step) -> bool {
         }
         Action::Scroll { amount, point } => {
             if let Some(px) = point.and_then(|p| rel_to_px(ctx, p)) {
-                ctx.platform.input.move_to(px);
+                let input = &ctx.platform.input;
+                input.move_to(px);
+                if !ctx.sleep_ms(120) {
+                    return false;
+                }
+                for (dx, dy) in [(3, 0), (-3, 2), (0, -2)] {
+                    input.move_rel(dx, dy);
+                    if !ctx.sleep_ms(25) {
+                        return false;
+                    }
+                }
                 if !ctx.sleep_ms(80) {
                     return false;
                 }
             }
-            let delay = ctx.settings.read().camera.step_delay_ms;
+            let delay = ctx.settings.read().camera.step_delay_ms.max(SCROLL_MIN_DELAY_MS);
             wheel_steps(ctx, amount.unsigned_abs(), amount.signum(), delay)
         }
         Action::Interact => interact(ctx, seq),

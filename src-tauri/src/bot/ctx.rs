@@ -9,6 +9,7 @@ use crate::config::{Settings, Store};
 use crate::core::platform::Platform;
 use crate::core::types::{MouseButton, PxRect, WindowInfo};
 use crate::events::{now_ms, BotEvent, BotState, LogLevel, LogLine, TimerReading};
+use crate::webhook::WebhookQueue;
 
 use super::session::Session;
 use super::Job;
@@ -26,6 +27,8 @@ pub struct Ctx {
     pub session: Mutex<Session>,
     pub job: Mutex<Option<Job>>,
     pub last_timer: Mutex<Option<TimerReading>>,
+    pub webhook: Arc<WebhookQueue>,
+    recent: Mutex<std::collections::VecDeque<LogLine>>,
     running: AtomicBool,
     timer_gate: AtomicU8,
     joined_at: Mutex<Option<Instant>>,
@@ -41,6 +44,7 @@ impl Ctx {
         roblox: Arc<RwLock<Option<WindowInfo>>>,
         events: Sender<BotEvent>,
         store: Arc<Store>,
+        webhook: Arc<WebhookQueue>,
     ) -> Self {
         let session = Session::with_base(store.load_stats());
         Self {
@@ -52,6 +56,8 @@ impl Ctx {
             session: Mutex::new(session),
             job: Mutex::new(None),
             last_timer: Mutex::new(None),
+            webhook,
+            recent: Mutex::new(std::collections::VecDeque::with_capacity(40)),
             running: AtomicBool::new(false),
             timer_gate: AtomicU8::new(GATE_DISARMED),
             joined_at: Mutex::new(None),
@@ -154,7 +160,19 @@ impl Ctx {
             LogLevel::Warn => tracing::warn!("{msg}"),
             LogLevel::Error => tracing::error!("{msg}"),
         }
-        self.emit(BotEvent::Log(LogLine { ts: now_ms(), level, msg: msg.to_string() }));
+        let line = LogLine { ts: now_ms(), level, msg: msg.to_string() };
+        if level != LogLevel::Debug {
+            let mut r = self.recent.lock();
+            if r.len() >= 40 {
+                r.pop_front();
+            }
+            r.push_back(line.clone());
+        }
+        self.emit(BotEvent::Log(line));
+    }
+
+    pub fn recent_logs(&self) -> Vec<LogLine> {
+        self.recent.lock().iter().cloned().collect()
     }
 
     pub fn log_debug(&self, m: &str) {

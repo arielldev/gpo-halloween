@@ -236,8 +236,21 @@ function StepEditor({ seq, index, step, s, onPatch }: { seq: SeqId; index: numbe
     case "scroll":
       return (
         <>
-          <Stepper value={step.amount} min={-60} max={60} onChange={(v) => onPatch({ amount: v } as Partial<Step>)} />
-          <span className="text-[11px] text-fg-mute whitespace-nowrap">{step.amount < 0 ? "down / zoom out" : "up / zoom in"}</span>
+          <Segmented
+            value={step.amount < 0 ? "down" : "up"}
+            options={[
+              { value: "down", label: "Down" },
+              { value: "up", label: "Up" },
+            ]}
+            onChange={(v) => onPatch({ amount: (v === "down" ? -1 : 1) * Math.max(1, Math.abs(step.amount)) } as Partial<Step>)}
+          />
+          <Stepper
+            value={Math.max(1, Math.abs(step.amount))}
+            min={1}
+            max={60}
+            onChange={(v) => onPatch({ amount: (step.amount < 0 ? -1 : 1) * Math.max(1, v) } as Partial<Step>)}
+          />
+          <span className="text-[11px] text-fg-mute whitespace-nowrap">notches</span>
           <span className="inline-flex items-center gap-1">
             <span className="text-[11px] text-fg-mute whitespace-nowrap">at</span>
             <PointField seq={seq} index={index} value={step.point ?? null} optional />

@@ -23,6 +23,9 @@ fn preflight(ctx: &Ctx, seqs: &[SeqId]) -> bool {
     }
     if !problems.is_empty() {
         ctx.log_error("Fix the steps above in Binds, then start again");
+        if matches!(*ctx.job.lock(), Some(Job::Cycle { .. })) {
+            ctx.webhook.error(&format!("The macro could not start:\n• {}", problems.join("\n• ")));
+        }
     }
     problems.is_empty()
 }
@@ -81,6 +84,7 @@ fn cycle(ctx: &Ctx, from: StartFrom) {
     ctx.disarm_timer();
     ctx.clear_joined();
     ctx.log_info(&format!("Run order: {} (repeats)", order_text(&order)));
+    ctx.webhook.started(&order_text(&order));
     let mut i = start_index(&order, from);
     if order[i] != SeqId::Lobby && order[i] != SeqId::Leave {
         ctx.mark_joined();
@@ -185,6 +189,13 @@ fn run_block(ctx: &Ctx, seq: SeqId) -> bool {
                 }
             }
             ctx.emit_stats();
+            if !shop {
+                let every = ctx.settings.read().webhook.every_routes;
+                let stats = ctx.session.lock().stats();
+                if every > 0 && stats.laps > 0 && stats.laps % every == 0 {
+                    ctx.webhook.progress(&stats, &ctx.recent_logs());
+                }
+            }
             true
         }
     }

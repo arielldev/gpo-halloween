@@ -47,8 +47,9 @@ impl Bot {
         roblox: Arc<RwLock<Option<WindowInfo>>>,
         events: Sender<BotEvent>,
         store: Arc<Store>,
+        webhook: Arc<crate::webhook::WebhookQueue>,
     ) -> Arc<Self> {
-        let ctx = Arc::new(Ctx::new(platform, settings, roblox, events, store));
+        let ctx = Arc::new(Ctx::new(platform, settings, roblox, events, store, webhook));
         Arc::new(Self { ctx, thread: Mutex::new(None), helpers: Mutex::new(Vec::new()), lock: Mutex::new(()) })
     }
 
@@ -101,6 +102,10 @@ impl Bot {
         if matches!(self.job(), Some(Job::Cycle { .. })) {
             self.ctx.session.lock().finish();
             self.ctx.emit_stats();
+            if was {
+                let stats = self.ctx.session.lock().stats();
+                self.ctx.webhook.stopped(&stats, &self.ctx.recent_logs());
+            }
         }
         *self.ctx.job.lock() = None;
         self.ctx.set_state(BotState::Stopped, None);
@@ -218,6 +223,7 @@ impl Bot {
         self.ctx.emit(BotEvent::Recovery { attempt, reason: reason.to_string() });
         if attempt > max {
             self.ctx.log_error(&format!("Restart limit reached ({max}); stopping"));
+            self.ctx.webhook.error(&format!("The watchdog restarted the loop {max} times and gave up: {reason}. The macro is stopped."));
             drop(_g);
             self.stop();
             return;

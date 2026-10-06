@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Copy, FileDown, FolderOpen, RotateCcw, Save, Trash2, Upload } from "lucide-react";
+import { check } from "@tauri-apps/plugin-updater";
+import { DiscordLogo, DISCORD_INVITE } from "../components/Discord";
+import { Copy, Download, FileDown, FolderOpen, RotateCcw, Save, Send, Trash2, Upload } from "lucide-react";
 import { api } from "../lib/ipc";
 import { useStore } from "../lib/store";
 import { fmtClock } from "../lib/types";
@@ -17,6 +19,34 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [dataDir, setDataDir] = useState("");
   const [confirmReset, setConfirmReset] = useState(false);
+  const [whMsg, setWhMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [updateMsg, setUpdateMsg] = useState<string | null>(null);
+
+  const testWebhook = async () => {
+    setWhMsg({ ok: true, text: "Sending…" });
+    try {
+      await api.webhookTest();
+      setWhMsg({ ok: true, text: "Sent. Check your Discord channel." });
+    } catch (e) {
+      setWhMsg({ ok: false, text: String(e) });
+    }
+  };
+
+  const checkUpdate = async () => {
+    setUpdateMsg("Checking…");
+    try {
+      const u = await check();
+      if (!u) {
+        setUpdateMsg("You're on the latest version.");
+        return;
+      }
+      setUpdateMsg(`Downloading ${u.version}…`);
+      await u.downloadAndInstall();
+      setUpdateMsg("Installing, the app will restart.");
+    } catch (e) {
+      setUpdateMsg(String(e));
+    }
+  };
 
   useEffect(() => {
     api.presetList().then(setPresets);
@@ -243,8 +273,68 @@ export default function SettingsPage() {
         ))}
       </Section>
 
+      <Section title="Discord">
+        <Row
+          title={
+            <span className="inline-flex items-center gap-2">
+              <DiscordLogo size={15} className="text-[#5865F2]" />
+              Webhook notifications
+            </span>
+          }
+          sub="Posts the macro's stats, recent activity and the community link to your Discord channel."
+          right={<Toggle value={s.webhook.enabled} onChange={(v) => update((x) => void (x.webhook.enabled = v))} />}
+          open={open === "discord"}
+          onToggle={() => toggle("discord")}
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <TextField value={s.webhook.url} onChange={(v) => update((x) => void (x.webhook.url = v.trim()))} placeholder="https://discord.com/api/webhooks/…" mono />
+              <Button size="sm" onClick={testWebhook} icon={<Send size={13} />}>
+                Test
+              </Button>
+            </div>
+            {whMsg && <Pill tone={whMsg.ok ? "ok" : "warn"}>{whMsg.text}</Pill>}
+            <div className="text-[11px] text-fg-mute leading-snug">Discord › channel settings › Integrations › Webhooks › New webhook › Copy URL.</div>
+            <Field label="Progress every">
+              <span className="inline-flex items-center gap-2">
+                <Stepper value={s.webhook.every_routes} min={0} max={100} onChange={(v) => update((x) => void (x.webhook.every_routes = v))} />
+                <span className="text-[11px] text-fg-mute">routes</span>
+              </span>
+            </Field>
+            <Field label="Start and stop">
+              <Toggle value={s.webhook.start_stop} onChange={(v) => update((x) => void (x.webhook.start_stop = v))} />
+            </Field>
+            <Field label="Problems">
+              <Toggle value={s.webhook.errors} onChange={(v) => update((x) => void (x.webhook.errors = v))} />
+            </Field>
+          </div>
+        </Row>
+        <Row
+          title="Community server"
+          sub={DISCORD_INVITE.replace("https://", "")}
+          right={
+            <Button size="sm" kind="ghost" onClick={() => api.openUrl(DISCORD_INVITE)} icon={<DiscordLogo size={13} />}>
+              Join
+            </Button>
+          }
+        />
+      </Section>
+
       <Section title="App">
-        <Row title="Version" sub={version} />
+        <Row
+          title="Updates"
+          sub={`Version ${version}. Checks GitHub for a newer release when the app starts.`}
+          right={
+            <>
+              <Toggle value={s.auto_update} onChange={(v) => update((x) => void (x.auto_update = v))} />
+              <Button size="sm" onClick={checkUpdate} icon={<Download size={13} />}>
+                Check
+              </Button>
+            </>
+          }
+        >
+          {updateMsg && <Pill tone="mute">{updateMsg}</Pill>}
+        </Row>
         <Row
           title="Data folder"
           sub={<span className="font-mono text-[11px] select-text">{dataDir}</span>}

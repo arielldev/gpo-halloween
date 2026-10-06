@@ -1,8 +1,9 @@
 {
-  "version": 8,
+  "version": 9,
   "setup": {
     "click_to_move": false,
-    "spawn_set": false
+    "spawn_set": false,
+    "auto_maximize": true
   },
   "server": {
     "code": "",
@@ -10,7 +11,7 @@
   },
   "keys": {
     "interact": "e",
-    "equip": "6"
+    "equip": "1"
   },
   "camera": {
     "enabled": true,
@@ -25,8 +26,8 @@
       {
         "kind": "click",
         "point": {
-          "x": 0.5,
-          "y": 0.5
+          "x": 0.53125,
+          "y": 0.10802775
         },
         "button": "left",
         "wait_ms": 2500,
@@ -34,14 +35,20 @@
       },
       {
         "kind": "click",
-        "point": null,
+        "point": {
+          "x": 0.69895834,
+          "y": 0.65510404
+        },
         "button": "left",
         "wait_ms": 2000,
         "note": "Private server join"
       },
       {
         "kind": "click",
-        "point": null,
+        "point": {
+          "x": 0.5005208,
+          "y": 0.62636274
+        },
         "button": "left",
         "wait_ms": 1000,
         "note": "Private server code box"
@@ -54,21 +61,30 @@
       },
       {
         "kind": "click",
-        "point": null,
+        "point": {
+          "x": 0.38854167,
+          "y": 0.5173439
+        },
         "button": "left",
         "wait_ms": 2000,
         "note": "Game type: Regular (confirms the pasted code)"
       },
       {
         "kind": "click",
-        "point": null,
+        "point": {
+          "x": 0.38854167,
+          "y": 0.5173439
+        },
         "button": "left",
         "wait_ms": 2000,
         "note": "Game type: Regular"
       },
       {
         "kind": "click",
-        "point": null,
+        "point": {
+          "x": 0.42395833,
+          "y": 0.5222993
+        },
         "button": "left",
         "wait_ms": 2000,
         "note": "First Sea server (joins)"
@@ -76,7 +92,128 @@
     ]
   },
   "macro": {
-    "steps": [],
+    "steps": [
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.153125,
+          "y": 0.31714568
+        },
+        "button": "right",
+        "wait_ms": 6500,
+        "note": "Walk from spawn to house 1"
+      },
+      {
+        "kind": "interact",
+        "wait_ms": 6500,
+        "note": "House 1: hold E (trick or treat)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.34166667,
+          "y": 0.4975223
+        },
+        "button": "right",
+        "wait_ms": 3500,
+        "note": "Walk to house 2"
+      },
+      {
+        "kind": "interact",
+        "wait_ms": 6500,
+        "note": "House 2: hold E (trick or treat)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.340625,
+          "y": 0.50346875
+        },
+        "button": "right",
+        "wait_ms": 3500,
+        "note": "Walk to house 3"
+      },
+      {
+        "kind": "interact",
+        "wait_ms": 6500,
+        "note": "House 3: hold E (trick or treat)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.33645833,
+          "y": 0.50049555
+        },
+        "button": "right",
+        "wait_ms": 3500,
+        "note": "Walk to house 4"
+      },
+      {
+        "kind": "interact",
+        "wait_ms": 6500,
+        "note": "House 4: hold E (trick or treat)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.409375,
+          "y": 0.654113
+        },
+        "button": "right",
+        "wait_ms": 3500,
+        "note": "Walk to house 5"
+      },
+      {
+        "kind": "interact",
+        "wait_ms": 6500,
+        "note": "House 5: hold E (trick or treat)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.5,
+          "y": 0.8305253
+        },
+        "button": "right",
+        "wait_ms": 3500,
+        "note": "Walk to house 6"
+      },
+      {
+        "kind": "interact",
+        "wait_ms": 6500,
+        "note": "House 6: hold E (trick or treat)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.49947917,
+          "y": 0.8295342
+        },
+        "button": "right",
+        "wait_ms": 3500,
+        "note": "Walk to house 7"
+      },
+      {
+        "kind": "interact",
+        "wait_ms": 6500,
+        "note": "House 7: hold E (trick or treat)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.49895832,
+          "y": 0.8295342
+        },
+        "button": "right",
+        "wait_ms": 3500,
+        "note": "Walk to house 8"
+      },
+      {
+        "kind": "interact",
+        "wait_ms": 6500,
+        "note": "House 8: hold E (trick or treat)"
+      }
+    ],
     "house_wait_ms": 5000,
     "interact_hold_ms": 100,
     "start_delay_ms": 1000,
@@ -86,22 +223,36 @@
     "steps": [
       {
         "kind": "click",
-        "point": null,
+        "point": {
+          "x": 0.15364583,
+          "y": 0.03666997
+        },
         "button": "left",
         "wait_ms": 800,
-        "note": "Menu toggle (opens the accordion)"
+        "note": "Open the GPO menu"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.14270833,
+          "y": 0.09415263
+        },
+        "button": "left",
+        "wait_ms": 800,
+        "note": "Return to main menu"
       },
       {
         "kind": "click",
         "point": null,
         "button": "left",
         "wait_ms": 0,
-        "note": "Main menu"
+        "enabled": false,
+        "note": "Confirm (off: turn on only if GPO asks to confirm)"
       },
       {
         "kind": "wait",
-        "wait_ms": 6000,
-        "note": "Wait for the title screen"
+        "wait_ms": 15000,
+        "note": "Wait for the main menu to load"
       }
     ]
   },
@@ -114,7 +265,7 @@
           "y": 0.7770069
         },
         "button": "right",
-        "wait_ms": 1000,
+        "wait_ms": 2000,
         "note": "Walk to the shop NPC (1/6)"
       },
       {
@@ -124,7 +275,7 @@
           "y": 0.7770069
         },
         "button": "right",
-        "wait_ms": 1000,
+        "wait_ms": 3000,
         "note": "Walk to the shop NPC (2/6)"
       },
       {
@@ -134,7 +285,7 @@
           "y": 0.7770069
         },
         "button": "right",
-        "wait_ms": 1000,
+        "wait_ms": 3000,
         "note": "Walk to the shop NPC (3/6)"
       },
       {
@@ -144,7 +295,7 @@
           "y": 0.7799802
         },
         "button": "right",
-        "wait_ms": 1000,
+        "wait_ms": 3000,
         "note": "Walk to the shop NPC (4/6)"
       },
       {
@@ -154,7 +305,7 @@
           "y": 0.79682857
         },
         "button": "right",
-        "wait_ms": 1000,
+        "wait_ms": 3000,
         "note": "Walk to the shop NPC (5/6)"
       },
       {
@@ -164,31 +315,81 @@
           "y": 0.7581764
         },
         "button": "right",
-        "wait_ms": 1000,
+        "wait_ms": 3000,
         "note": "At the shop NPC (6/6)"
       },
       {
         "kind": "scroll",
-        "amount": 4,
+        "amount": -4,
+        "point": {
+          "x": 0.49427083,
+          "y": 0.47968286
+        },
         "wait_ms": 200,
-        "note": "Scroll the shop list (pick where the list is)"
+        "note": "Scroll the shop list down"
       },
       {
         "kind": "click",
-        "point": null,
+        "point": {
+          "x": 0.6635417,
+          "y": 0.493558
+        },
         "button": "left",
         "wait_ms": 1000,
-        "note": "The item to buy"
+        "note": "Buy the item (1/3)"
       },
       {
         "kind": "click",
-        "point": null,
+        "point": {
+          "x": 0.44166666,
+          "y": 0.52130824
+        },
         "button": "left",
-        "wait_ms": 1500,
-        "note": "Accept"
+        "wait_ms": 1000,
+        "note": "Accept (1/3)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.6645833,
+          "y": 0.49454907
+        },
+        "button": "left",
+        "wait_ms": 1000,
+        "note": "Buy the item (2/3)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.4421875,
+          "y": 0.5232904
+        },
+        "button": "left",
+        "wait_ms": 1000,
+        "note": "Accept (2/3)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.66510415,
+          "y": 0.49454907
+        },
+        "button": "left",
+        "wait_ms": 1000,
+        "note": "Buy the item (3/3)"
+      },
+      {
+        "kind": "click",
+        "point": {
+          "x": 0.4421875,
+          "y": 0.5232904
+        },
+        "button": "left",
+        "wait_ms": 1000,
+        "note": "Accept (3/3)"
       }
     ],
-    "every": 0
+    "every": 5
   },
   "run_order": [
     {
@@ -204,10 +405,10 @@
   "timer": {
     "enabled": true,
     "region": {
-      "x": 0.86,
-      "y": 0.92,
-      "w": 0.13,
-      "h": 0.07
+      "x": 0.97291666,
+      "y": 0.92666006,
+      "w": 0.026041666,
+      "h": 0.017839445
     },
     "mode": "elapsed",
     "stop_at_s": 290,
@@ -256,5 +457,13 @@
     "heartbeat_timeout_s": 30.0,
     "max_restarts": 5,
     "restart_backoff_s": 3.0
-  }
+  },
+  "webhook": {
+    "enabled": false,
+    "url": "",
+    "every_routes": 5,
+    "start_stop": true,
+    "errors": true
+  },
+  "auto_update": true
 }

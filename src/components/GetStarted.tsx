@@ -47,9 +47,10 @@ export function GetStarted() {
               n={1}
               done={!!roblox}
               title="Open Roblox and join GPO"
-              sub={roblox ? `Detected · ${roblox.client.w} × ${roblox.client.h}. Keep this window size for recording and playback.` : "The macro attaches to the Roblox window automatically."}
+              sub={roblox ? `Detected · ${roblox.client.w} × ${roblox.client.h}. The macro keeps Roblox maximized in a window (not fullscreen) so clicks and the timer area always line up.` : "The macro attaches to the Roblox window automatically."}
             >
               <Pill tone={roblox ? "ok" : "warn"}>{roblox ? "detected" : "not found"}</Pill>
+              <Check label="Keep Roblox maximized" value={s.setup.auto_maximize} onChange={(v) => update((x) => void (x.setup.auto_maximize = v))} />
             </Step>
 
             <Step

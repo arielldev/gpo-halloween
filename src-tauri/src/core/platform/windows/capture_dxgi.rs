@@ -33,15 +33,6 @@ struct Session {
 
 const STALE_AFTER: std::time::Duration = std::time::Duration::from_millis(1200);
 
-static LAST_NOTE: parking_lot::Mutex<Option<std::time::Instant>> = parking_lot::Mutex::new(None);
-
-fn note_fallback(reason: &str) {
-    let mut last = LAST_NOTE.lock();
-    if last.map(|t| t.elapsed() > std::time::Duration::from_secs(30)).unwrap_or(true) {
-        *last = Some(std::time::Instant::now());
-        tracing::info!("screen capture: {reason}; using the GDI fallback");
-    }
-}
 
 unsafe impl Send for Session {}
 
@@ -212,7 +203,6 @@ impl Capture for DxgiCapture {
                 if e.contains("stale") {
                     *self.session.lock() = None;
                 }
-                note_fallback(&e);
                 self.fallback.grab(rect)
             }
         }
